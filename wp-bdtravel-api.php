@@ -12,12 +12,7 @@ define( PLUGIN_URL, plugins_url() . '/wp-bdtravel-api' );
 
 require_once( PLUGIN_PATH . '/inc/assets.php' );
 require_once( PLUGIN_PATH . '/inc/ajax-data.php' );
-require_once( PLUGIN_PATH . '/inc/shortcodes.php' );
-require_once( PLUGIN_PATH . '/inc/widgets.php' );
-
 require_once( PLUGIN_PATH . '/inc/fieldmanager/class-bdtravel-fm-submenu.php' );
-require_once( PLUGIN_PATH . '/inc/class-helper-functions.php' );
-
 
 include "forms.php";
 
@@ -42,6 +37,15 @@ function get_client_ip_server() {
     return $ipaddress;
 }
 
+// Check if there is not data from search
+function check_data(){
+  if( !$_POST){
+    echo ' <script>
+          var post_data = null;
+          </script>';
+  }
+
+}
 
 // Construct URL to get hotel list
 function construct_url_hotels(){
@@ -135,7 +139,11 @@ function cache_image($image_url){
 //echo cache_image("http://images.e-tsw.com/_lib/vimages/Cancun/Hotels/Gran-Caribe-Resort-and-Spa/Gallery/Cancun-Gran-Caribe-Real-Asoleadero_xl.jpg");
 
 // Adding [Tags]
-
+function add_container_tag(){
+  return '<img id="loading" src="' . PLUGIN_URL . '/img/loading.gif"/> 
+            <div id="main-container"></div>
+          <div id="loading-bottom"><img src="' . PLUGIN_URL . '/img/loading-bottom.gif"/> Cargando más resultados</div>';
+} 
 
 /******
 * * Get hotel details according to the Hotel ID
@@ -154,7 +162,7 @@ function get_hotel_details(){
   $detail = '<div id="main-container">';
 
     
-  foreach ( $xml->Hotel as $key => $item ) {
+  foreach ($xml->Hotel as $key => $item) {
     $hotel_name = $item->Name;
     $hotel_city = $item->DestinationPath;
     $hotel_city_name = $item->Address->City->Name;
@@ -363,6 +371,7 @@ function get_hotel_details(){
 
 //If it is a detail section, set the shortcode as hotel detail, if not, set it as search results
 
+add_shortcode( 'bdtravel-container', 'add_container_tag' );
 
 /***
 * Hotel Rates
@@ -412,3 +421,59 @@ echo $xml_rates;
   $rates .= '</div>';
   return $rates;
 }
+
+/********
+* Register Sidebar
+********/
+add_action( 'widgets_init', 'etravel_vxl_widgets_init' );
+function etravel_vxl_widgets_init() {
+    register_sidebar( array(
+        'name' => __( 'E-Travel Sidebar', 'theme-slug' ),
+        'id' => 'etravel-1',
+        'description' => __( 'Los widgets en esta area seran mostrados en la vista de reserva.', 'theme-slug' ),
+        'before_widget' => '<li id="%1$s" class="widget %2$s">',
+        'after_widget'  => '</li>',
+        'before_title'  => '<h2 class="widgettitle">',
+        'after_title'   => '</h2>',
+    ) );
+
+    register_widget( 'BDTravelWidget' );
+
+}
+
+// ##### Widget ######
+class BDTravelWidget extends WP_Widget {
+
+  function __construct() {
+    // Instantiate the parent object
+    parent::__construct( false, 'BD Widget' );
+  }
+
+  function widget( $args, $instance ) {
+    $current_url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    // Widget output
+    if( isset( $_GET['h'] ) ){
+      echo '<div class="sidebar-widget book-box">
+              <span class="price-from">Desde:</span>
+              <span class="price">MXN$ '.round( $_GET['promedio'], 2 ).'</span>
+              <span class="price-comment">Precio promedio por noche, Imp. Incluidos.</span>
+              <a class="button" href="'.$current_url.'&rates=true">Elegir Habitacion</a>
+            </div>';
+    } else {
+      echo "busqueda";
+    }
+    
+  }
+
+  function update( $new_instance, $old_instance ) {
+    // Save widget options
+    $instance['title'] = strip_tags($new_instance['title']);
+    return $instance;
+  }
+
+  function form( $instance ) {
+    // Output admin widget options form
+  }
+}
+
+?>

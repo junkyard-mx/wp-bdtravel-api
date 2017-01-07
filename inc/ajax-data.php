@@ -1,35 +1,18 @@
 <?php
-// Variables from ajax request
-$datafile = $_POST['xml_url'];
-$temp_name = $_POST['request_id'];
-
-//Everytime you access to the hotels section you will load again the file from the server, it's only loading the cached file on scroll petitions
-
-// ** Cache xml file
-$cacheName =  'temp/';
-$cacheName .= $temp_name;
-$cacheName .= '.xml.cache';
-
-// generate the cache version if it doesn't exist or it's too old!
-$ageInSeconds = 3600; // one hour
-
-if(!file_exists($cacheName) || filemtime($cacheName) > time() + $ageInSeconds) {
-  $contents = file_get_contents($datafile);
-  file_put_contents($cacheName, $contents);
-}
-
-// Writing POST params in the URL to read them in hotel detail and show ratings
-$url_params = str_replace( "http://testxml.e-tsw.com/AffiliateService/AffiliateService.svc/restful/GetQuoteHotels", "", $datafile);
-
-//Load xml file
-if( ! $xml = simplexml_load_file($cacheName) ) { 
-        echo '<script type="text/javascript">console.log("Unable to load XML file")</script>';
-        echo $datafile;
-    } 
-    else 
-    { 
-        echo '<script type="text/javascript">console.log("XML file loaded successfully")</script>';  
-}
+function get_quote_hotels() {
+	// Variables from ajax request
+	$datafile = $_POST['xml_url'];
+	$random_id = $_POST['request_id'];
+	
+	$xml = bdtravel_get_xml_object( $datafile, 'quote_hotels_' . $random_id );
+	
+	//Load xml file
+	if( ! $xml ) { 
+		echo '<script type="text/javascript">console.log("Unable to load XML file")</script>';
+	    echo $datafile;
+    } else { 
+		echo '<script type="text/javascript">console.log("XML file loaded successfully")</script>';  
+	}
 
 //Quote ID
 $quote_id = $xml->QuoteId;
@@ -101,7 +84,7 @@ foreach ($hotels as $hotel) {
 			<p>Precio por Noche</p>
 			<p>Impuestos incluidos</p>
 			<a href="<?php echo $url_params. '&promedio='.$precioPromedio.'&h=' . $HId; ?>">
-				<div class="button">Reservar</div>
+				<div class="bd-button">Reservar</div>
 			</a>
 		</div>	
 		<? echo $counter; ?>
@@ -111,4 +94,38 @@ foreach ($hotels as $hotel) {
 	
 <?php
 }}  //ends foreach
-?>
+} // end function
+add_action( 'wp_ajax_get_quote_hotels', 'get_quote_hotels' );
+add_action( 'wp_ajax_get_quote_hotels', 'get_quote_hotels' );
+
+function bdtravel_fetch_xml( $url ) {
+	$data = false;
+
+	if ( $url ) {
+
+		$response = wp_remote_get( $url, array('timeout' => 15) );
+
+		if ( ! is_wp_error( $response ) ) {
+			$data = wp_remote_retrieve_body( $response );
+		}
+
+	}
+
+	return $data ? $data : false;
+}
+
+function bdtravel_get_xml_object( $url, $name ) {
+
+	if ( false === ( $xml_file = get_transient( $name ) ) ) {
+
+		$xml_file = bdtravel_fetch_xml( $url );
+
+		if ( $xml_file ) {
+
+		  set_transient( $name, $xml_file, HOUR_IN_SECONDS ); // 1 hour
+
+		}
+
+	}
+	return $xml_file ? @simplexml_load_string( $xml_file ) : false;
+}

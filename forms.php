@@ -1,15 +1,6 @@
 <?php
 //Construction of forms
 
-//Enqueue scripts
-function enqueue_form_styles_scripts(){
-  /* Enqueue our stylesheet. */
-   wp_enqueue_style( 'searchbox', plugins_url().'/e-travel-api-vxl/css/resbox.css' );
-   wp_enqueue_script( 'etravel', plugins_url(). '/e-travel-api-vxl/js/etravel.js', array('jquery-ui') );    
-
-}
-add_action( 'wp_enqueue_scripts', 'enqueue_form_styles_scripts' );
-
 function search_box_one(){
 	return ' 
     <div class="etWContainer">
