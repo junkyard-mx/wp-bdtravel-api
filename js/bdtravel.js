@@ -142,7 +142,7 @@ function randomID() {
         }
     });
 
-    // Hotels auto complete
+    // Hotels and destinations auto complete
     $( function() {
         $( "#destination" ).autocomplete({
             source: function( request, response ) {
@@ -152,7 +152,8 @@ function randomID() {
                     jsonpCallback: "BDHotels",
                     data: {
                         Lenguaje: "ESP",
-                        ItemTypes: "H:10",
+                        ItemTypes: "H:10,D:10,C:10",
+                        Oder: "H,D,C",
                         Filters: "",
                         PalabraBuscada: request.term
                     },
@@ -160,18 +161,36 @@ function randomID() {
                         response( $.map( data.results, function( item ) {
                             return {
                                 label: item.Label,
-                                value: item.Label,
-                                id: item.TypeID
+                                Type: item.Type,
+                                ID: item.TypeID
                             }
                         }));
                     }
                 } );
             },
             minLength: 2,
-            select: function( event, item ) {
-                $( '#destionation' ).val( item.label );
+            select: function( event, ui ) {
+                $( '#did' ).val( ui.item.ID );
+                $( '#dtype' ).val( ui.item.Type );
             }
         } );
+
+        // On search form submit
+        $( "#hotels-search-box" ).submit(function( event ) {
+            event.preventDefault();
+            if ( 'H' === $( "#dtype" ).val() ) {
+                // go to hotel details
+                var hotelEndpoint = $('#hotel-details-url').val();
+                $('#hotels-search-box').attr( 'action', hotelEndpoint );
+                $('#hotels-search-box')[0].submit();
+            } else {
+                // go to hotels list
+                var hotelDetailsEndpoint = $('#hotels-url').val();
+                $('#hotels-search-box').attr( 'action', hotelDetailsEndpoint );
+                $('#hotels-search-box')[0].submit();
+            }
+        });
+
     } );
 
 }); // end of file

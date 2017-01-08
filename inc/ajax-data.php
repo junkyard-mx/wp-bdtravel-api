@@ -14,18 +14,14 @@ function get_quote_hotels() {
 		echo '<script type="text/javascript">console.log("XML file loaded successfully")</script>';  
 	}
 
-//Quote ID
-$quote_id = $xml->QuoteId;
+	//Quote ID
+	$quote_id = $xml->QuoteId;
 
-//Sort by Review->Rating
-$hotels = array();
-foreach($xml->Hotels->Hotel as $hotel) {
-    $hotels[] = $hotel;
-};
-
-// usort ($hotels, function($a, $b) {
-//     return strcmp($b->Reviews->Review->Rating, $a->Reviews->Review->Rating);
-// });
+	//Sort by Review->Rating
+	$hotels = array();
+	foreach( $xml->Hotels->Hotel as $hotel ) {
+	    $hotels[] = $hotel;
+	};
 
 	//Pagination
  	$startPage = $_POST['page'];
@@ -34,67 +30,45 @@ foreach($xml->Hotels->Hotel as $hotel) {
     $total = count($hotels);
 
 
-//get hotel entry
-foreach ($hotels as $hotel) {
-	 $currentRecord += 1;
-    if($currentRecord > ($startPage * $perPage) && $currentRecord < ($startPage * $perPage + $perPage)){
-    
-    $counter="<input type='hidden' class='nextpage' value='".($startPage+1)."'><input type='hidden' class='isload' value='true'>";
+	//get hotel entry
+	foreach ( $hotels as $hotel ) {
+		$currentRecord += 1;
+	    if ( $currentRecord > ( $startPage * $perPage ) && $currentRecord < ( $startPage * $perPage + $perPage ) ) {
+	    
+		    $counter="<input type='hidden' class='nextpage' value='".($startPage+1)."'><input type='hidden' class='isload' value='true'>";
 
-    //getting hotel details
-	$HName = $hotel[0]->Name;
-	$HDescription = $hotel->Description;
-	$HImage = $hotel->Image;
-	$HCategory = $hotel->CategoryId;
-	$HLocation = $hotel->CityName;
-	$HId = $hotel->Id;
-	$HRating = $hotel->Reviews->Review->Rating;
+		    //getting hotel details
+			$HName = $hotel[0]->Name;
+			$HDescription = $hotel->Description;
+			$HImage = $hotel->Image;
+			$HCategory = $hotel->CategoryId;
+			$HLocation = $hotel->CityName;
+			$hotel_id = $hotel->Id;
+			$HRating = $hotel->Reviews->Review->Rating;
+			$hotel_endpoint = get_page_link( Helper_Functions::get_pages_configuration( 'page_hotel_details' ) );
 
-		//Get habitations details
-		foreach ($hotel->Rooms->children()  as $room ) {
-			if(isset($room->MealPlans->MealPlan->AverageTotal)){
-				$tipoHabitacion = $room->Name;
-				$planAlimentos = $room->MealPlans->MealPlan->Name;
-				$precioPromedio = $room->MealPlans->MealPlan->AverageTotal;
-				$precio_sin_promocion = $room->MealPlans->MealPlan->AverageNormal;
+			//Get room details
+			foreach ( $hotel->Rooms->children()  as $room ) {
+				if( isset( $room->MealPlans->MealPlan->AverageTotal ) ){
+					$tipoHabitacion = $room->Name;
+					$planAlimentos = $room->MealPlans->MealPlan->Name;
+					$precioPromedio = $room->MealPlans->MealPlan->AverageTotal;
+					$precio_sin_promocion = $room->MealPlans->MealPlan->AverageNormal;
 
-			break;
+				break;
+				}
 			}
-				// //Get habitation -> Mealplans details
-				// foreach ($room->MealPlans->children() as $roomDetail) {
-				// 	//echo $roomDetail->Name.' '.$roomDetail->AverageGrossTotal.'<br>';
-				// }
+			// include template part
+			include PLUGIN_PATH . '/template-parts/content-hotels.php';
+				
+			if( $currentRecord == $total ){
+				echo '<div>Sorry, no more results to display.</div>' ;
+			}
+		
 		}
-?>
-	<div class="content-summary" id="<?php echo $HId ?>">
-		<div class="left-info">
-			<div class="hotel-image"><a href="<?php echo $url_params. '&promedio='.$precioPromedio.'&h=' . $HId; ?>"><img src="<? echo $HImage ?>" /></a></div>
-			<h2 class="hotel-name"><a href="<?php echo $url_params. '&promedio='.$precioPromedio.'&h=' . $HId; ?>"> <?php echo $HName ?> </a></h2>
-			<div class="category stars <?php echo $HCategory ?>"></div>
-			<div class="rating"><i class="fa fa-comment-o"></i> <?php echo $HRating ?><span class="rating-small">/5 de Calificación</span></div>
-			<ul class="more-details">
-				<li class="location"><i class="fa fa-location-arrow"></i> <?php echo $HLocation ?></li>
-				<!-- <li><?php echo $tipoHabitacion ?></li> -->
-				<li class="plan-alimentos"><?php echo $planAlimentos ?></li>
-			</ul>
-		</div>
-		<div class="right-info">
-			<div class="normal-price"><span style="font-size:9px;">MXN$</span> <?php echo round($precio_sin_promocion, 2) ?></div>
-			<div class="price"><span style="font-size:14px;">MXN$</span> <?php echo round($precioPromedio, 2) ?></div>
-			<p>Precio por Noche</p>
-			<p>Impuestos incluidos</p>
-			<a href="<?php echo $url_params. '&promedio='.$precioPromedio.'&h=' . $HId; ?>">
-				<div class="bd-button">Reservar</div>
-			</a>
-		</div>	
-		<? echo $counter; ?>
-	</div>
-	<div class="divider"></div>
-	<? if( $currentRecord == $total){echo '<div>Sorry, no more results to display.</div>' ;} ?>
-	
-<?php
-}}  //ends foreach
-} // end function
+	}  //ends foreach
+} // ends function
+// TODO: only run this on hotels page
 add_action( 'wp_ajax_get_quote_hotels', 'get_quote_hotels' );
 add_action( 'wp_ajax_get_quote_hotels', 'get_quote_hotels' );
 
