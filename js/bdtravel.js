@@ -33,6 +33,8 @@ function randomID() {
 
 
  jQuery(document).ready(function($){
+
+    // ajax url
     var ajax_arry=[];
     var ajax_index =0;
     var sctp = 100;
@@ -106,5 +108,71 @@ function randomID() {
     if( $( window ).scrollTop() == $(window).height() ) { }
     });
 
-});
+    /** date picker **/
+    $( function() {
+    var dateFormat = "mm/dd/yy",
+      from = $( "#startDate" )
+        .datepicker({
+          defaultDate: "+1w",
+          changeMonth: true,
+          numberOfMonths: 1
+        })
+        .on( "change", function() {
+          to.datepicker( "option", "minDate", getDate( this ) );
+        }),
+      to = $( "#endDate" ).datepicker({
+        defaultDate: "+1w",
+        changeMonth: true,
+        numberOfMonths: 1
+      })
+      .on( "change", function() {
+        from.datepicker( "option", "maxDate", getDate( this ) );
+      });
+ 
+        // get date
+        function getDate( element ) {
+          var date;
+          try {
+            date = $.datepicker.parseDate( dateFormat, element.value );
+          } catch( error ) {
+            date = null;
+          }
+     
+          return date;
+        }
+    });
+
+    // Hotels auto complete
+    $( function() {
+        $( "#destination" ).autocomplete({
+            source: function( request, response ) {
+                $.ajax( {
+                    url: "http://ajax.e-tsw.com/searchservices/getSearchJson.aspx",
+                    dataType: "jsonp",
+                    jsonpCallback: "BDHotels",
+                    data: {
+                        Lenguaje: "ESP",
+                        ItemTypes: "H:10",
+                        Filters: "",
+                        PalabraBuscada: request.term
+                    },
+                    success: function( data ) {
+                        response( $.map( data.results, function( item ) {
+                            return {
+                                label: item.Label,
+                                value: item.Label,
+                                id: item.TypeID
+                            }
+                        }));
+                    }
+                } );
+            },
+            minLength: 2,
+            select: function( event, item ) {
+                $( '#destionation' ).val( item.label );
+            }
+        } );
+    } );
+
+}); // end of file
       
