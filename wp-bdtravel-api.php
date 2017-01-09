@@ -18,9 +18,6 @@ require_once( PLUGIN_PATH . '/inc/widgets.php' );
 require_once( PLUGIN_PATH . '/inc/fieldmanager/class-bdtravel-fm-submenu.php' );
 require_once( PLUGIN_PATH . '/inc/class-helper-functions.php' );
 
-
-include "forms.php";
-
 // Function to get the client ip address
 function get_client_ip_server() {
     $ipaddress = '';
@@ -143,61 +140,4 @@ function cache_image($image_url){
     fclose($local_image_file);  
   }
   return $image_path.$image_filename;
-}
-//usage
-//echo cache_image("http://images.e-tsw.com/_lib/vimages/Cancun/Hotels/Gran-Caribe-Resort-and-Spa/Gallery/Cancun-Gran-Caribe-Real-Asoleadero_xl.jpg");
-
-// Adding [Tags]
-
-
-//If it is a detail section, set the shortcode as hotel detail, if not, set it as search results
-
-
-/***
-* Hotel Rates
-** Building the URL to GetQuoteHotelRate and show rates and rooms.
-*/
-function get_hotel_rates(){
-  $url_parameters = str_replace("&h=&", "", $_SERVER['QUERY_STRING']);
-  $xml_rates = "http://testxml.e-tsw.com/AffiliateService/AffiliateService.svc/restful/GetQuoteHotelRate?" . $url_parameters;
-echo $xml_rates;
-  //Load xml file for GetQuoteHotelRate
-  if( ! $xml_feed_rates = simplexml_load_file($xml_rates) ) { 
-          echo '<script type="text/javascript">console.log("GetQuoteHotelRate - Unable to load XML file ")</script>'; 
-      } else { 
-          echo '<script type="text/javascript">console.log("GetQuoteHotelRate - XML file loaded successfully")</script>';  
-  }
-
-
-
-  //var_dump($xml_feed_rates->Hotel->Rooms);
-  $rates = "";
-  $rates .= '<div class="rates-container">';
-      foreach ($xml_feed_rates->Hotel->Rooms->Room as $key => $value) {
-        //Room values
-        $room_name = $value->Name;
-        $room_image = 'http:'.$value->Image;
-
-        $rates .= '<div class="room">';
-        $rates .= '<h3>'.$room_name.'</h3>';
-        $rates .= '<div class="room-image">';
-        //if ( getimagesize( $room_image )){
-          $rates .= '<img src="'.$room_image.'" width="180px" />';
-        // } else {
-        //   $rates .= '';
-        // }
-        $rates .= '</div>';
-        $rates .= '<div class="room-details">';
-        $rates .= '<p style="font-size:10px;">' . $value->Description . '</p>';
-            //Mealplans for each room
-            foreach ($xml_feed_rates->Hotel->Rooms->Room->MealPlans->MealPlan as $key => $meal_plan) {
-              # code...
-              $rates .= '<h4>' . $meal_plan->Name . '</h4>';
-            }
-
-        $rates .= '</div>';
-        $rates .= '</div>';
-      }
-  $rates .= '</div>';
-  return $rates;
 }
